@@ -33,7 +33,7 @@ builder.Services.AddSingleton<JwtService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<PasswordService>();
+builder.Services.AddScoped<IPasswordService, PasswordService>();
 
 builder.Services.AddAutoMapper(typeof(Program));
 

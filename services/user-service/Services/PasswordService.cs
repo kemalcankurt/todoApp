@@ -3,7 +3,7 @@ using System.Text;
 
 namespace user_service.Services
 {
-    public class PasswordService
+    public class PasswordService : IPasswordService
     {
         public HashedPassword HashPassword(string password)
         {

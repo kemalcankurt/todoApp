@@ -9,10 +9,10 @@ namespace user_service.Services
     {
         private readonly IUserService _userService;
         private readonly JwtService _jwtService;
-        private readonly PasswordService _passwordService;
+        private readonly IPasswordService _passwordService;
         private readonly JwtOptions _jwtOptions;
 
-        public AuthService(IUserService userService, JwtService jwtService, PasswordService passwordService, IOptions<JwtOptions> jwtOptions)
+        public AuthService(IUserService userService, JwtService jwtService, IPasswordService passwordService, IOptions<JwtOptions> jwtOptions)
         {
             _userService = userService;
             _jwtService = jwtService;

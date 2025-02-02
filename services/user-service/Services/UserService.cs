@@ -10,11 +10,11 @@ namespace user_service.Services
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
-        private readonly PasswordService _passwordService;
+        private readonly IPasswordService _passwordService;
         private readonly IMapper _mapper;
         private readonly JwtOptions _jwtOptions;
 
-        public UserService(IUserRepository userRepository, IMapper mapper, PasswordService passwordService, IOptions<JwtOptions> jwtOptions)
+        public UserService(IUserRepository userRepository, IMapper mapper, IPasswordService passwordService, IOptions<JwtOptions> jwtOptions)
         {
             _userRepository = userRepository;
             _passwordService = passwordService;
@@ -48,6 +48,12 @@ namespace user_service.Services
 
         public async Task<UserDto> CreateUserAsync(CreateUserDto createUserDto)
         {
+            var existingUser = await _userRepository.GetByEmailAsync(createUserDto.Email);
+            if (existingUser != null)
+            {
+                throw new Exception("This email is already in use.");
+            }
+
             var user = _mapper.Map<User>(createUserDto);
 
             var hashedPassword = _passwordService.HashPassword(createUserDto.Password);
