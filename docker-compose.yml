@@ -1,0 +1,43 @@
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    container_name: sqlserver_container
+    ports:
+      - "1433:1433"
+    environment:
+      SA_PASSWORD: "yourStrong(!)Password"
+      ACCEPT_EULA: "Y"
+    restart: always
+
+  api-gateway:
+    container_name: api-gateway
+    build: ./api-gateway
+    ports:
+      - "8000:8000"
+    depends_on:
+      - todo-service
+      - user-service
+
+  todo-service:
+    container_name: todo-service
+    build: 
+      context: ./services/todo-service
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=TodoDB;User Id=sa;Password=yourStrong(!)Password;TrustServerCertificate=True;Encrypt=False"
+    depends_on:
+      - sqlserver
+
+  user-service:
+    container_name: user-service
+    build: 
+      context: ./services/user-service
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5001"
+    environment:
+      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=UserDB;User Id=sa;Password=yourStrong(!)Password;"
+    depends_on:
+      - sqlserver

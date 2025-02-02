@@ -1,0 +1,66 @@
+{
+    "Routes": [
+        {
+            "DownstreamPathTemplate": "/api/todo",
+            "DownstreamScheme": "http",
+            "DownstreamHostAndPorts": [
+                {
+                    "Host": "todo-service",
+                    "Port": 5000
+                }
+            ],
+            "UpstreamPathTemplate": "/api/todo",
+            "UpstreamHttpMethod": [
+                "GET",
+                "POST"
+            ]
+        },
+        {
+            "DownstreamPathTemplate": "/api/todo/{id}",
+            "DownstreamScheme": "http",
+            "DownstreamHostAndPorts": [
+                {
+                    "Host": "todo-service",
+                    "Port": 5000
+                }
+            ],
+            "UpstreamPathTemplate": "/api/todo/{id}",
+            "UpstreamHttpMethod": [
+                "GET",
+                "PUT",
+                "DELETE"
+            ]
+        },
+        {
+            "DownstreamPathTemplate": "/api/user",
+            "DownstreamScheme": "http",
+            "DownstreamHostAndPorts": [
+                {
+                    "Host": "user-service",
+                    "Port": 5001
+                }
+            ],
+            "UpstreamPathTemplate": "/api/user",
+            "UpstreamHttpMethod": [
+                "GET",
+                "POST"
+            ]
+        },
+        {
+            "DownstreamPathTemplate": "/api/user/{id}",
+            "DownstreamScheme": "http",
+            "DownstreamHostAndPorts": [
+                {
+                    "Host": "user-service",
+                    "Port": 5001
+                }
+            ],
+            "UpstreamPathTemplate": "/api/user/{id}",
+            "UpstreamHttpMethod": [
+                "GET",
+                "PUT",
+                "DELETE"
+            ]
+        }
+    ]
+}
