@@ -61,6 +61,20 @@
                 "PUT",
                 "DELETE"
             ]
+        },
+        {
+            "DownstreamPathTemplate": "/api/user/login",
+            "DownstreamScheme": "http",
+            "DownstreamHostAndPorts": [
+                {
+                    "Host": "user-service",
+                    "Port": 5001
+                }
+            ],
+            "UpstreamPathTemplate": "/api/user/login",
+            "UpstreamHttpMethod": [
+                "POST"
+            ]
         }
     ]
 }

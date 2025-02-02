@@ -5,9 +5,11 @@ services:
     ports:
       - "1433:1433"
     environment:
-      SA_PASSWORD: "yourStrong(!)Password"
+      SA_PASSWORD: "Password1."
       ACCEPT_EULA: "Y"
     restart: always
+    volumes:
+      - sql_data:/var/opt/mssql  # Persistent Data Storage
 
   api-gateway:
     container_name: api-gateway
@@ -26,7 +28,7 @@ services:
     ports:
       - "5000:5000"
     environment:
-      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=TodoDB;User Id=sa;Password=yourStrong(!)Password;TrustServerCertificate=True;Encrypt=False"
+      ASPNETCORE_ENVIRONMENT: "Docker"
     depends_on:
       - sqlserver
 
@@ -38,6 +40,9 @@ services:
     ports:
       - "5001:5001"
     environment:
-      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=UserDB;User Id=sa;Password=yourStrong(!)Password;"
+      ASPNETCORE_ENVIRONMENT: "Docker"
     depends_on:
       - sqlserver
+
+volumes:
+  sql_data: 

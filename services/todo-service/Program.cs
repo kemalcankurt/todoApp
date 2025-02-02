@@ -4,8 +4,14 @@ using todo_service.Data;
 using todo_service.Repositories;
 using todo_service.Services;
 
+var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Configuration
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json", optional: false)
+    .AddJsonFile($"appsettings.{environment}.json", optional: true)
+    .AddEnvironmentVariables();
 
 // Add services to the container.
 builder.Services.AddControllers();
