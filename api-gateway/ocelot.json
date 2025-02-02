@@ -1,37 +1,27 @@
 {
     "Routes": [
         {
-            "DownstreamPathTemplate": "/api/todo",
+            "UpstreamPathTemplate": "/api/user/login",
+            "UpstreamHttpMethod": [
+                "POST"
+            ],
+            "DownstreamPathTemplate": "/api/user/login",
             "DownstreamScheme": "http",
             "DownstreamHostAndPorts": [
                 {
-                    "Host": "todo-service",
-                    "Port": 5000
+                    "Host": "user-service",
+                    "Port": 5001
                 }
-            ],
-            "UpstreamPathTemplate": "/api/todo",
-            "UpstreamHttpMethod": [
-                "GET",
-                "POST"
             ]
         },
         {
-            "DownstreamPathTemplate": "/api/todo/{id}",
-            "DownstreamScheme": "http",
-            "DownstreamHostAndPorts": [
-                {
-                    "Host": "todo-service",
-                    "Port": 5000
-                }
-            ],
-            "UpstreamPathTemplate": "/api/todo/{id}",
+            "UpstreamPathTemplate": "/api/user",
             "UpstreamHttpMethod": [
                 "GET",
+                "POST",
                 "PUT",
                 "DELETE"
-            ]
-        },
-        {
+            ],
             "DownstreamPathTemplate": "/api/user",
             "DownstreamScheme": "http",
             "DownstreamHostAndPorts": [
@@ -40,13 +30,17 @@
                     "Port": 5001
                 }
             ],
-            "UpstreamPathTemplate": "/api/user",
-            "UpstreamHttpMethod": [
-                "GET",
-                "POST"
-            ]
+            "AuthenticationOptions": {
+                "AuthenticationProviderKey": "Bearer"
+            }
         },
         {
+            "UpstreamPathTemplate": "/api/user/{id}",
+            "UpstreamHttpMethod": [
+                "GET",
+                "PUT",
+                "DELETE"
+            ],
             "DownstreamPathTemplate": "/api/user/{id}",
             "DownstreamScheme": "http",
             "DownstreamHostAndPorts": [
@@ -55,26 +49,32 @@
                     "Port": 5001
                 }
             ],
-            "UpstreamPathTemplate": "/api/user/{id}",
-            "UpstreamHttpMethod": [
-                "GET",
-                "PUT",
-                "DELETE"
-            ]
+            "AuthenticationOptions": {
+                "AuthenticationProviderKey": "Bearer"
+            }
         },
         {
-            "DownstreamPathTemplate": "/api/user/login",
+            "UpstreamPathTemplate": "/api/todo",
+            "UpstreamHttpMethod": [
+                "GET",
+                "POST",
+                "PUT",
+                "DELETE"
+            ],
+            "DownstreamPathTemplate": "/api/todo",
             "DownstreamScheme": "http",
             "DownstreamHostAndPorts": [
                 {
-                    "Host": "user-service",
-                    "Port": 5001
+                    "Host": "todo-service",
+                    "Port": 5000
                 }
             ],
-            "UpstreamPathTemplate": "/api/user/login",
-            "UpstreamHttpMethod": [
-                "POST"
-            ]
+            "AuthenticationOptions": {
+                "AuthenticationProviderKey": "Bearer"
+            }
         }
-    ]
+    ],
+    "GlobalConfiguration": {
+        "BaseUrl": "http://localhost:8000"
+    }
 }

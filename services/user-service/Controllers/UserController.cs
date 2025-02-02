@@ -1,11 +1,14 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+
 using user_service.DTOs;
 using user_service.Services;
 
 namespace user_service.Controllers
 {
-    [Route("api/user")]
+    [Authorize]
     [ApiController]
+    [Route("api/user")]
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -70,16 +73,18 @@ namespace user_service.Controllers
             return NoContent();
         }
 
+        [AllowAnonymous]
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
         {
-            bool isValidUser = await _userService.VerifyUserCredentialsAsync(loginDto.Email, loginDto.Password);
-            if (!isValidUser)
+            string? token = await _userService.VerifyUserCredentialsAsync(loginDto.Email, loginDto.Password);
+
+            if (string.IsNullOrEmpty(token))
             {
                 return Unauthorized(new { message = "Invalid email or password" });
             }
 
-            return Ok(new { message = "Login successful" });
+            return Ok(new { message = "Login successful", token = token });
         }
     }
 }

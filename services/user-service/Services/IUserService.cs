@@ -11,6 +11,6 @@ namespace user_service.Services
         Task<UserDto> CreateUserAsync(CreateUserDto createUserDto);
         Task UpdateUserAsync(long id, UpdateUserDto updateUserDto);
         Task DeleteUserAsync(long id);
-        Task<bool> VerifyUserCredentialsAsync(string email, string password);
+        Task<string?> VerifyUserCredentialsAsync(string email, string password);
     }
 }

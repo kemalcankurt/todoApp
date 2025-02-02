@@ -10,13 +10,15 @@ namespace user_service.Services
     {
         private readonly IUserRepository _userRepository;
         private readonly PasswordService _passwordService;
+        private readonly JwtService _jwtService;
         private readonly IMapper _mapper;
 
-        public UserService(IUserRepository userRepository, IMapper mapper, PasswordService passwordService)
+        public UserService(IUserRepository userRepository, IMapper mapper, PasswordService passwordService, JwtService jwtService)
         {
             _userRepository = userRepository;
-            _mapper = mapper;
             _passwordService = passwordService;
+            _jwtService = jwtService;
+            _mapper = mapper;
         }
 
         public async Task<IEnumerable<UserDto>> GetAllUsersAsync()
@@ -76,13 +78,13 @@ namespace user_service.Services
             await _userRepository.DeleteAsync(id);
         }
 
-        public async Task<bool> VerifyUserCredentialsAsync(string email, string password)
+        public async Task<string?> VerifyUserCredentialsAsync(string email, string password)
         {
             var user = await _userRepository.GetByEmailAsync(email);
-            if (user == null)
-                return false;
+            if (user == null || !_passwordService.VerifyPassword(password, user.PasswordHash, user.PasswordSalt))
+                return null;
 
-            return _passwordService.VerifyPassword(password, user.PasswordHash, user.PasswordSalt);
+            return _jwtService.GenerateJwtToken(user.Id, user.Email, user.Role);
         }
     }
 }
