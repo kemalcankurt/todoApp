@@ -6,6 +6,6 @@ namespace user_service.Services
     {
         Task<AuthResponseDto?> AuthenticateUserAsync(LoginDto loginDto);
         Task<RefreshTokenDto> RefreshTokenAsync(string refreshToken);
-        Task<bool> LogoutAsync(string authorizationHeader);
+        Task<bool> LogoutAsync(HttpContext context);
     }
 }

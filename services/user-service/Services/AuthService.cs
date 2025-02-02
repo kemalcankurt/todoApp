@@ -52,9 +52,13 @@ namespace user_service.Services
             return new RefreshTokenDto { AccessToken = newAccessToken, RefreshToken = newRefreshToken };
         }
 
-        public async Task<bool> LogoutAsync(string authorizationHeader)
+        public async Task<bool> LogoutAsync(HttpContext context)
         {
-            long? userId = _jwtService.DecodeJwtToken(authorizationHeader);
+            string? token = context.Request.Headers.Authorization.FirstOrDefault()?.Split(" ").Last();
+            if (string.IsNullOrEmpty(token))
+                return false;
+
+            long? userId = _jwtService.DecodeJwtToken(token);
             if (userId == null) return false;
 
             await _userService.RemoveRefreshToken(userId.Value);

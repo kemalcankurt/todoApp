@@ -21,7 +21,7 @@ namespace user_service.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Policy = "RequireAdminRole")]
         public async Task<ActionResult<IEnumerable<UserDto>>> GetAllUsers()
         {
             var users = await _userService.GetAllUsersAsync();
@@ -106,12 +106,7 @@ namespace user_service.Controllers
         [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {
-            string? token = HttpContext.Request.Headers.Authorization.FirstOrDefault()?.Split(" ").Last();
-
-            if (token == null)
-                return Unauthorized("Access token is invalid");
-
-            bool isLoggedOut = await _authService.LogoutAsync(token);
+            bool isLoggedOut = await _authService.LogoutAsync(HttpContext);
 
             if (!isLoggedOut)
                 return Unauthorized();

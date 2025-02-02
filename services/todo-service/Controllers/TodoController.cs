@@ -22,6 +22,7 @@ namespace todo_service.Controllers
         }
 
         [HttpGet]
+        [Authorize(Policy = "RequireAdminRole")]
         public async Task<ActionResult<IEnumerable<Todo>>> GetTodos()
         {
             var todos = await _todoService.GetAllTodosAsync();

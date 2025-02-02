@@ -99,7 +99,7 @@ namespace user_service.Services
         public async Task RemoveRefreshToken(long userId)
         {
             var user = await _userRepository.GetByIdAsync(userId);
-            if (user != null)
+            if (user != null && user.RefreshToken != null && user.RefreshTokenExpiry != null)
             {
                 user.RefreshToken = null;
                 user.RefreshTokenExpiry = null;
