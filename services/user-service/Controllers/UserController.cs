@@ -12,13 +12,16 @@ namespace user_service.Controllers
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
+        private readonly IAuthService _authService;
 
-        public UserController(IUserService userService)
+        public UserController(IUserService userService, IAuthService authService)
         {
             _userService = userService;
+            _authService = authService;
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<IEnumerable<UserDto>>> GetAllUsers()
         {
             var users = await _userService.GetAllUsersAsync();
@@ -77,14 +80,43 @@ namespace user_service.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
         {
-            string? token = await _userService.VerifyUserCredentialsAsync(loginDto.Email, loginDto.Password);
-
-            if (string.IsNullOrEmpty(token))
-            {
+            var authResult = await _authService.AuthenticateUserAsync(loginDto);
+            if (authResult == null)
                 return Unauthorized(new { message = "Invalid email or password" });
-            }
 
-            return Ok(new { message = "Login successful", token = token });
+            return Ok(authResult);
+        }
+
+        [AllowAnonymous]
+        [HttpPost("refresh-token")]
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenDto refreshTokenDto)
+        {
+            try
+            {
+                var tokens = await _authService.RefreshTokenAsync(refreshTokenDto.RefreshToken);
+                return Ok(tokens);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Unauthorized(new { message = "Invalid refresh token" });
+            }
+        }
+
+        [Authorize]
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            string? token = HttpContext.Request.Headers.Authorization.FirstOrDefault()?.Split(" ").Last();
+
+            if (token == null)
+                return Unauthorized("Access token is invalid");
+
+            bool isLoggedOut = await _authService.LogoutAsync(token);
+
+            if (!isLoggedOut)
+                return Unauthorized();
+
+            return Ok(new { message = "Logged out successfully" });
         }
     }
 }

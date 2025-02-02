@@ -1,4 +1,4 @@
-namespace user_service.Config
+namespace todo_service.Config
 {
     public class JwtOptions
     {
@@ -6,6 +6,5 @@ namespace user_service.Config
         public int ExpiryMinutes { get; set; }
         public string Issuer { get; set; } = string.Empty;
         public string Audience { get; set; } = string.Empty;
-        public int RefreshTokenExpiryDays { get; set; }
     }
 }

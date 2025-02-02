@@ -1,5 +1,6 @@
 using AutoMapper;
-
+using Microsoft.Extensions.Options;
+using user_service.Config;
 using user_service.DTOs;
 using user_service.Models;
 using user_service.Repositories;
@@ -10,15 +11,15 @@ namespace user_service.Services
     {
         private readonly IUserRepository _userRepository;
         private readonly PasswordService _passwordService;
-        private readonly JwtService _jwtService;
         private readonly IMapper _mapper;
+        private readonly JwtOptions _jwtOptions;
 
-        public UserService(IUserRepository userRepository, IMapper mapper, PasswordService passwordService, JwtService jwtService)
+        public UserService(IUserRepository userRepository, IMapper mapper, PasswordService passwordService, IOptions<JwtOptions> jwtOptions)
         {
             _userRepository = userRepository;
             _passwordService = passwordService;
-            _jwtService = jwtService;
             _mapper = mapper;
+            _jwtOptions = jwtOptions.Value;
         }
 
         public async Task<IEnumerable<UserDto>> GetAllUsersAsync()
@@ -39,10 +40,10 @@ namespace user_service.Services
             return user == null ? null : _mapper.Map<UserDto>(user);
         }
 
-        public async Task<UserDto?> GetUserByEmailAsync(string email)
+        public async Task<User?> GetUserByEmailAsync(string email)
         {
             var user = await _userRepository.GetByEmailAsync(email);
-            return user == null ? null : _mapper.Map<UserDto>(user);
+            return user;
         }
 
         public async Task<UserDto> CreateUserAsync(CreateUserDto createUserDto)
@@ -78,13 +79,32 @@ namespace user_service.Services
             await _userRepository.DeleteAsync(id);
         }
 
-        public async Task<string?> VerifyUserCredentialsAsync(string email, string password)
+        public async Task<User?> GetUserByRefreshTokenAsync(string refreshToken)
         {
-            var user = await _userRepository.GetByEmailAsync(email);
-            if (user == null || !_passwordService.VerifyPassword(password, user.PasswordHash, user.PasswordSalt))
-                return null;
+            var user = await _userRepository.GetUserByRefreshTokenAsync(refreshToken);
+            return user;
+        }
 
-            return _jwtService.GenerateJwtToken(user.Id, user.Email, user.Role);
+        public async Task UpdateRefreshTokenAsync(long userId, string refreshToken)
+        {
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null) throw new Exception("User not found");
+
+            user.RefreshToken = refreshToken;
+            user.RefreshTokenExpiry = DateTime.UtcNow.AddDays(_jwtOptions.RefreshTokenExpiryDays);
+
+            await _userRepository.UpdateAsync(user);
+        }
+
+        public async Task RemoveRefreshToken(long userId)
+        {
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user != null)
+            {
+                user.RefreshToken = null;
+                user.RefreshTokenExpiry = null;
+                await _userRepository.UpdateAsync(user);
+            }
         }
     }
 }

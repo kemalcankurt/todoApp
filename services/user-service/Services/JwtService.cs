@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 
 using Microsoft.Extensions.Options;
@@ -39,6 +40,28 @@ namespace user_service.Services
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+        public long? DecodeJwtToken(string token)
+        {
+            if (string.IsNullOrEmpty(token))
+                return null;
+
+            var handler = new JwtSecurityTokenHandler();
+            var jwtToken = handler.ReadJwtToken(token);
+
+            var userIdClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub);
+
+            return userIdClaim != null ? long.Parse(userIdClaim.Value) : null;
+        }
+
+        public string GenerateRefreshToken()
+        {
+            var randomNumber = new byte[32];
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(randomNumber);
+                return Convert.ToBase64String(randomNumber);
+            }
         }
     }
 }

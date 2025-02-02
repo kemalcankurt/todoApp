@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using todo_service.DTOs;
@@ -6,15 +7,18 @@ using todo_service.Services;
 
 namespace todo_service.Controllers
 {
+    [Authorize]
     [Route("api/todo")]
     [ApiController]
     public class TodoController : ControllerBase
     {
         private readonly ITodoService _todoService;
+        private readonly JwtService _jwtService;
 
-        public TodoController(ITodoService todoService)
+        public TodoController(ITodoService todoService, JwtService jwtService)
         {
             _todoService = todoService;
+            _jwtService = jwtService;
         }
 
         [HttpGet]
@@ -37,7 +41,17 @@ namespace todo_service.Controllers
         [HttpPost]
         public async Task<ActionResult<TodoReadDto>> CreateTodo(TodoCreateDto todo)
         {
-            var addedTodo = await _todoService.AddTodoAsync(todo);
+            string? token = HttpContext.Request.Headers.Authorization.FirstOrDefault()?.Split(" ").Last();
+
+            if (string.IsNullOrEmpty(token))
+                return Unauthorized(new { message = "A valid token is required." });
+
+            long? userId = _jwtService.DecodeJwtToken(token);
+
+            if (!userId.HasValue)
+                return BadRequest(new { message = "Invalid token or user not found." });
+
+            var addedTodo = await _todoService.AddTodoAsync(userId, todo);
             return CreatedAtAction(nameof(GetTodoById), new { id = addedTodo.Id }, addedTodo);
         }
 

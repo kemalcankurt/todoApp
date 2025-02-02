@@ -24,7 +24,7 @@ builder.Services.AddDbContext<UserDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // JWT Config
-var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>();
+JwtOptions? jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>();
 var key = Encoding.UTF8.GetBytes(jwtOptions.Secret);
 
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
@@ -32,6 +32,7 @@ builder.Services.AddSingleton<JwtService>();
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<PasswordService>();
 
 builder.Services.AddAutoMapper(typeof(Program));

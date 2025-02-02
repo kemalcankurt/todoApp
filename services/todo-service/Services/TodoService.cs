@@ -3,27 +3,23 @@ using todo_service.Repositories;
 using todo_service.DTOs;
 using todo_service.Services;
 
+using AutoMapper;
+
 public class TodoService : ITodoService
 {
     private readonly ITodoRepository _todoRepository;
+    private readonly IMapper _mapper;
 
-    public TodoService(ITodoRepository todoRepository)
+    public TodoService(ITodoRepository todoRepository, IMapper mapper)
     {
         _todoRepository = todoRepository;
+        _mapper = mapper;
     }
 
     public async Task<IEnumerable<TodoReadDto>> GetAllTodosAsync()
     {
         var todos = await _todoRepository.GetAllAsync();
-        return todos.Select(t => new TodoReadDto
-        {
-            Id = t.Id,
-            Title = t.Title,
-            Description = t.Description,
-            IsCompleted = t.IsCompleted,
-            CreatedDate = t.CreatedDate,
-            UpdatedDate = t.UpdatedDate
-        });
+        return _mapper.Map<IEnumerable<TodoReadDto>>(todos);
     }
 
     public async Task<TodoReadDto?> GetTodoByIdAsync(int id)
@@ -31,42 +27,21 @@ public class TodoService : ITodoService
         var todo = await _todoRepository.GetByIdAsync(id);
         if (todo == null) return null;
 
-        return new TodoReadDto
-        {
-            Id = todo.Id,
-            Title = todo.Title,
-            Description = todo.Description,
-            IsCompleted = todo.IsCompleted,
-            CreatedDate = todo.CreatedDate,
-            UpdatedDate = todo.UpdatedDate
-        };
+        return _mapper.Map<TodoReadDto>(todo);
     }
 
-    public async Task<TodoReadDto> AddTodoAsync(TodoCreateDto todoDto)
+    public async Task<TodoReadDto> AddTodoAsync(long? userId, TodoCreateDto todoDto)
     {
-        var newTodo = new Todo
-        {
-            Title = todoDto.Title,
-            Description = todoDto.Description,
-            IsCompleted = todoDto.IsCompleted,
-            CreatedDate = DateTime.UtcNow,
-            UpdatedDate = DateTime.UtcNow,
-            // TODO: change after auth
-            UserId = 1, // const for now, will change after auth
-            IsDeleted = false
-        };
+        if (!userId.HasValue)
+            throw new UnauthorizedAccessException("A valid user is required.");
 
-        var createdTodo = await _todoRepository.AddAsync(newTodo);
+        var newTodo = _mapper.Map<Todo>(todoDto);
+        newTodo.UserId = userId.Value;
+        newTodo.CreatedDate = DateTime.UtcNow;
+        newTodo.UpdatedDate = DateTime.UtcNow;
 
-        return new TodoReadDto
-        {
-            Id = createdTodo.Id,
-            Title = createdTodo.Title,
-            Description = createdTodo.Description,
-            IsCompleted = createdTodo.IsCompleted,
-            CreatedDate = createdTodo.CreatedDate,
-            UpdatedDate = createdTodo.UpdatedDate
-        };
+        await _todoRepository.AddAsync(newTodo);
+        return _mapper.Map<TodoReadDto>(newTodo);
     }
 
     public async Task<bool> UpdateTodoAsync(int id, TodoUpdateDto todoDto)
@@ -74,9 +49,7 @@ public class TodoService : ITodoService
         var existingTodo = await _todoRepository.GetByIdAsync(id);
         if (existingTodo == null) return false;
 
-        existingTodo.Title = todoDto.Title;
-        existingTodo.Description = todoDto.Description;
-        existingTodo.IsCompleted = todoDto.IsCompleted;
+        _mapper.Map(todoDto, existingTodo);
         existingTodo.UpdatedDate = DateTime.UtcNow;
 
         await _todoRepository.UpdateAsync(existingTodo);

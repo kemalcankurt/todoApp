@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-
+using Microsoft.Extensions.Options;
+using user_service.Config;
 using user_service.Data;
 using user_service.Models;
 
@@ -9,10 +10,12 @@ namespace user_service.Repositories
 
     {
         private readonly UserDbContext _dbContext;
+        private readonly JwtOptions _jwtOptions;
 
-        public UserRepository(UserDbContext dbContext)
+        public UserRepository(UserDbContext dbContext, IOptions<JwtOptions> jwtOptions)
         {
             _dbContext = dbContext;
+            _jwtOptions = jwtOptions.Value;
         }
 
         public async Task<IEnumerable<User>> GetAllAsync()
@@ -54,6 +57,22 @@ namespace user_service.Repositories
             {
                 user.IsDeleted = true;
                 _dbContext.Users.Update(user);
+                await _dbContext.SaveChangesAsync();
+            }
+        }
+
+        public async Task<User?> GetUserByRefreshTokenAsync(string refreshToken)
+        {
+            return await _dbContext.Users.FirstOrDefaultAsync(u => u.RefreshToken == refreshToken);
+        }
+
+        public async Task UpdateRefreshTokenAsync(long userId, string refreshToken)
+        {
+            var user = await _dbContext.Users.FindAsync(userId);
+            if (user != null)
+            {
+                user.RefreshToken = refreshToken;
+                user.RefreshTokenExpiry = DateTime.UtcNow.AddDays(_jwtOptions.RefreshTokenExpiryDays);
                 await _dbContext.SaveChangesAsync();
             }
         }

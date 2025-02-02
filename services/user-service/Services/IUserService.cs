@@ -1,4 +1,5 @@
 using user_service.DTOs;
+using user_service.Models;
 
 namespace user_service.Services
 {
@@ -7,10 +8,12 @@ namespace user_service.Services
         Task<IEnumerable<UserDto>> GetAllUsersAsync();
         Task<UserDto?> GetUserByIdAsync(long id);
         Task<UserDto?> GetUserByUsernameAsync(string username);
-        Task<UserDto?> GetUserByEmailAsync(string email);
+        Task<User?> GetUserByEmailAsync(string email);
         Task<UserDto> CreateUserAsync(CreateUserDto createUserDto);
         Task UpdateUserAsync(long id, UpdateUserDto updateUserDto);
         Task DeleteUserAsync(long id);
-        Task<string?> VerifyUserCredentialsAsync(string email, string password);
+        Task<User?> GetUserByRefreshTokenAsync(string refreshToken);
+        Task UpdateRefreshTokenAsync(long userId, string refreshToken);
+        Task RemoveRefreshToken(long userId);
     }
 }

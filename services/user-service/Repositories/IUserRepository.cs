@@ -11,5 +11,7 @@ namespace user_service.Repositories
         Task AddAsync(User user);
         Task UpdateAsync(User user);
         Task DeleteAsync(long id);
+        Task<User?> GetUserByRefreshTokenAsync(string refreshToken);
+        Task UpdateRefreshTokenAsync(long userId, string refreshToken);
     }
 }

@@ -15,12 +15,41 @@
             ]
         },
         {
+            "UpstreamPathTemplate": "/api/user/refresh-token",
+            "UpstreamHttpMethod": [
+                "POST"
+            ],
+            "DownstreamPathTemplate": "/api/user/refresh-token",
+            "DownstreamScheme": "http",
+            "DownstreamHostAndPorts": [
+                {
+                    "Host": "user-service",
+                    "Port": 5001
+                }
+            ]
+        },
+        {
+            "UpstreamPathTemplate": "/api/user/logout",
+            "UpstreamHttpMethod": [
+                "POST"
+            ],
+            "DownstreamPathTemplate": "/api/user/logout",
+            "DownstreamScheme": "http",
+            "DownstreamHostAndPorts": [
+                {
+                    "Host": "user-service",
+                    "Port": 5001
+                }
+            ],
+            "AuthenticationOptions": {
+                "AuthenticationProviderKey": "Bearer"
+            }
+        },
+        {
             "UpstreamPathTemplate": "/api/user",
             "UpstreamHttpMethod": [
                 "GET",
-                "POST",
-                "PUT",
-                "DELETE"
+                "POST"
             ],
             "DownstreamPathTemplate": "/api/user",
             "DownstreamScheme": "http",
@@ -72,9 +101,25 @@
             "AuthenticationOptions": {
                 "AuthenticationProviderKey": "Bearer"
             }
+        },
+        {
+            "UpstreamPathTemplate": "/api/todo/{id}",
+            "UpstreamHttpMethod": [
+                "GET",
+                "PUT",
+                "DELETE"
+            ],
+            "DownstreamPathTemplate": "/api/todo/{id}",
+            "DownstreamScheme": "http",
+            "DownstreamHostAndPorts": [
+                {
+                    "Host": "todo-service",
+                    "Port": 5000
+                }
+            ],
+            "AuthenticationOptions": {
+                "AuthenticationProviderKey": "Bearer"
+            }
         }
-    ],
-    "GlobalConfiguration": {
-        "BaseUrl": "http://localhost:8000"
-    }
+    ]
 }
