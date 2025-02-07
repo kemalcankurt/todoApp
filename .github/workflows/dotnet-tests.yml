@@ -1,0 +1,43 @@
+name: Run .NET Tests and Generate Coverage Report
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '9.0'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build project
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Run tests with coverage
+        run: dotnet test --no-build --configuration Release --collect:"XPlat Code Coverage" --logger trx
+
+      - name: Install ReportGenerator
+        run: dotnet tool install --global dotnet-reportgenerator-globaltool
+
+      - name: Generate Coverage Report
+        run: reportgenerator -reports:**/TestResults/**/*.xml -targetdir:coverage -reporttypes:HtmlInline_AzurePipelines;Cobertura
+
+      - name: Upload Coverage Report as Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: coverage
