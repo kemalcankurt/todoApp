@@ -1,4 +1,4 @@
-name: Run .NET Tests and Generate Coverage Report
+name: Run .NET Tests and Generate Coverage Report 
 
 on:
   push:
