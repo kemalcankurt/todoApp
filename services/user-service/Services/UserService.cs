@@ -1,7 +1,10 @@
-using AutoMapper;
 using Microsoft.Extensions.Options;
+
+using AutoMapper;
+
 using user_service.Config;
 using user_service.DTOs;
+using user_service.Exceptions;
 using user_service.Models;
 using user_service.Repositories;
 
@@ -51,7 +54,7 @@ namespace user_service.Services
             var existingUser = await _userRepository.GetByEmailAsync(createUserDto.Email);
             if (existingUser != null)
             {
-                throw new Exception("This email is already in use.");
+                throw new DuplicateEmailException("This email is already in use.");
             }
 
             var user = _mapper.Map<User>(createUserDto);
@@ -82,6 +85,9 @@ namespace user_service.Services
 
         public async Task DeleteUserAsync(long id)
         {
+            _ = await _userRepository.GetByIdAsync(id)
+                       ?? throw new UserNotFoundException();
+
             await _userRepository.DeleteAsync(id);
         }
 
@@ -94,7 +100,7 @@ namespace user_service.Services
         public async Task UpdateRefreshTokenAsync(long userId, string refreshToken)
         {
             var user = await _userRepository.GetByIdAsync(userId);
-            if (user == null) throw new Exception("User not found");
+            if (user == null) throw new UserNotFoundException();
 
             user.RefreshToken = refreshToken;
             user.RefreshTokenExpiry = DateTime.UtcNow.AddDays(_jwtOptions.RefreshTokenExpiryDays);

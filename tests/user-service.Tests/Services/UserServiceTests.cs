@@ -1,10 +1,16 @@
 using System.Text;
-using AutoMapper;
-using FluentAssertions;
+
 using Microsoft.Extensions.Options;
+
+using AutoMapper;
+
+using FluentAssertions;
+
 using Moq;
+
 using user_service.Config;
 using user_service.DTOs;
+using user_service.Exceptions;
 using user_service.Mappings;
 using user_service.Models;
 using user_service.Repositories;
@@ -106,7 +112,59 @@ namespace user_service.Tests.Services
                 .ReturnsAsync(existingUser);
 
             // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _userService.CreateUserAsync(createUserDto));
+            await Assert.ThrowsAsync<DuplicateEmailException>(() => _userService.CreateUserAsync(createUserDto));
+        }
+
+        [Fact]
+        public async Task CreateUserAsync_ValidData_ShouldCreateUser()
+        {
+            // Arrange
+            var createUserDto = new CreateUserDto { Email = "new@todoapp.com", Password = "StrongPass123" };
+            var newUser = new User { Id = 99, Email = createUserDto.Email, PasswordHash = Encoding.UTF8.GetBytes("hashed"), PasswordSalt = Encoding.UTF8.GetBytes("salt") };
+
+            _userRepositoryMock.Setup(x => x.GetByEmailAsync(createUserDto.Email))
+                .ReturnsAsync((User)null!);
+
+            _userRepositoryMock.Setup(x => x.AddAsync(It.IsAny<User>()))
+                .Callback<User>(u => u.Id = newUser.Id)
+                .Returns(Task.CompletedTask);
+
+            // Act
+            var result = await _userService.CreateUserAsync(createUserDto);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(newUser.Id, result.Id);
+            Assert.Equal(newUser.Email, result.Email);
+        }
+
+        [Fact]
+        public async Task UpdateUserAsync_UserNotFound_ShouldThrowException()
+        {
+            // Arrange
+            var updateUserDto = new UpdateUserDto { Email = "update@todoapp.com", Password = "UpdatedPass123" };
+            _userRepositoryMock.Setup(x => x.GetByIdAsync(999)).ReturnsAsync((User)null!);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _userService.UpdateUserAsync(999, updateUserDto));
+        }
+        [Fact]
+        public async Task DeleteUserAsync_ValidId_ShouldDeleteUser()
+        {
+            // Arrange
+            var user = new User { Id = 5, Email = "delete@todoapp.com" };
+
+            _userRepositoryMock.Setup(x => x.GetByIdAsync(user.Id))
+                .ReturnsAsync(user);
+
+            _userRepositoryMock.Setup(x => x.DeleteAsync(user.Id))
+                .Returns(Task.CompletedTask);
+
+            // Act
+            await _userService.DeleteUserAsync(user.Id);
+
+            // Assert
+            _userRepositoryMock.Verify(x => x.DeleteAsync(user.Id), Times.Once);
         }
 
 

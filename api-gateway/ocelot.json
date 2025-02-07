@@ -29,6 +29,20 @@
             ]
         },
         {
+            "UpstreamPathTemplate": "/api/user/register",
+            "UpstreamHttpMethod": [
+                "POST"
+            ],
+            "DownstreamPathTemplate": "/api/user/register",
+            "DownstreamScheme": "http",
+            "DownstreamHostAndPorts": [
+                {
+                    "Host": "user-service",
+                    "Port": 5001
+                }
+            ]
+        },
+        {
             "UpstreamPathTemplate": "/api/user/logout",
             "UpstreamHttpMethod": [
                 "POST"

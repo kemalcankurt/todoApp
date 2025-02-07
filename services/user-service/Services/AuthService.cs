@@ -1,6 +1,6 @@
 using user_service.DTOs;
-using user_service.Services;
 using user_service.Config;
+
 using Microsoft.Extensions.Options;
 
 namespace user_service.Services
@@ -8,11 +8,11 @@ namespace user_service.Services
     public class AuthService : IAuthService
     {
         private readonly IUserService _userService;
-        private readonly JwtService _jwtService;
+        private readonly IJwtService _jwtService;
         private readonly IPasswordService _passwordService;
         private readonly JwtOptions _jwtOptions;
 
-        public AuthService(IUserService userService, JwtService jwtService, IPasswordService passwordService, IOptions<JwtOptions> jwtOptions)
+        public AuthService(IUserService userService, IJwtService jwtService, IPasswordService passwordService, IOptions<JwtOptions> jwtOptions)
         {
             _userService = userService;
             _jwtService = jwtService;

@@ -1,9 +1,10 @@
-using System;
 using Moq;
+
 using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Http;
+
 using user_service.Config;
 using user_service.Services;
-using Xunit;
 using user_service.DTOs;
 using user_service.Models;
 using System.Text;
@@ -16,7 +17,7 @@ namespace user_service.Tests.Services
         private readonly Mock<IUserService> _userServiceMock;
         private readonly Mock<IOptions<JwtOptions>> _jwtOptionsMock;
         private readonly Mock<IPasswordService> _passwordServiceMock;
-        private readonly JwtService _jwtService;
+        private readonly Mock<IJwtService> _jwtServiceMock;
 
         public AuthServiceTests()
         {
@@ -35,11 +36,11 @@ namespace user_service.Tests.Services
 
             _jwtOptionsMock.Setup(o => o.Value).Returns(jwtOptions);
 
-            _jwtService = new JwtService(_jwtOptionsMock.Object);
+            _jwtServiceMock = new Mock<IJwtService>();
 
             _authService = new AuthService(
                 _userServiceMock.Object,
-                _jwtService,
+                _jwtServiceMock.Object,
                 _passwordServiceMock.Object,
                 _jwtOptionsMock.Object
             );
@@ -71,6 +72,9 @@ namespace user_service.Tests.Services
             _passwordServiceMock.Setup(x => x.VerifyPassword(loginDto.Password, user.PasswordHash, user.PasswordSalt))
                 .Returns(true);
 
+            _jwtServiceMock.Setup(x => x.GenerateJwtToken(It.IsAny<long>(), It.IsAny<string>(), It.IsAny<string>())).Returns("accessToken");
+            _jwtServiceMock.Setup(x => x.GenerateRefreshToken()).Returns("refreshToken");
+
             // Act
             var result = await _authService.AuthenticateUserAsync(loginDto);
 
@@ -88,6 +92,9 @@ namespace user_service.Tests.Services
 
             _userServiceMock.Setup(x => x.GetUserByRefreshTokenAsync(refreshToken))
                 .ReturnsAsync(userDto);
+
+            _jwtServiceMock.Setup(x => x.GenerateJwtToken(It.IsAny<long>(), It.IsAny<string>(), It.IsAny<string>())).Returns("accessToken");
+            _jwtServiceMock.Setup(x => x.GenerateRefreshToken()).Returns("refreshToken");
 
             // Act
             var result = await _authService.RefreshTokenAsync(refreshToken);
@@ -160,6 +167,61 @@ namespace user_service.Tests.Services
             await Assert.ThrowsAsync<UnauthorizedAccessException>(() => _authService.RefreshTokenAsync(invalidToken));
         }
 
+        [Fact]
+        public async Task LogoutAsync_ValidToken_ShouldRemoveRefreshToken()
+        {
+            // Arrange
+            var userId = 1;
+            var validToken = "valid-jwt-token";
+
+            var user = new UserDto
+            {
+                Id = userId,
+            };
+
+            // HttpContext ve HttpRequest
+            var httpContextMock = new Mock<HttpContext>();
+            var httpRequestMock = new Mock<HttpRequest>();
+
+            var headers = new HeaderDictionary { { "Authorization", $"Bearer {validToken}" } };
+
+            httpRequestMock.Setup(x => x.Headers).Returns(headers);
+            httpContextMock.Setup(x => x.Request).Returns(httpRequestMock.Object);
+
+            _jwtServiceMock.Setup(x => x.DecodeJwtToken(validToken)).Returns(userId);
+            _userServiceMock.Setup(x => x.GetUserByIdAsync(userId)).ReturnsAsync(user);
+            _userServiceMock.Setup(x => x.RemoveRefreshToken(userId)).Returns(Task.CompletedTask);
+
+            // Act
+            var result = await _authService.LogoutAsync(httpContextMock.Object);
+
+            // Assert
+            Assert.True(result);
+            _userServiceMock.Verify(x => x.RemoveRefreshToken(userId), Times.Once);
+        }
+
+
+        [Fact]
+        public async Task LogoutAsync_InvalidToken_ShouldReturnFalse()
+        {
+            // Arrange
+            // HttpContext ve HttpRequest
+            var httpContextMock = new Mock<HttpContext>();
+            var httpRequestMock = new Mock<HttpRequest>();
+
+            var headers = new HeaderDictionary();
+
+            httpRequestMock.Setup(x => x.Headers).Returns(headers);
+            httpContextMock.Setup(x => x.Request).Returns(httpRequestMock.Object);
+
+            _jwtServiceMock.Setup(x => x.DecodeJwtToken(It.IsAny<string>())).Returns((long?)null);
+
+            // Act
+            var result = await _authService.LogoutAsync(httpContextMock.Object);
+
+            // Assert
+            Assert.False(result);
+        }
 
     }
 }

@@ -10,7 +10,7 @@ using user_service.Config;
 
 namespace user_service.Services
 {
-    public class JwtService
+    public class JwtService : IJwtService
     {
         private readonly JwtOptions _jwtOptions;
 

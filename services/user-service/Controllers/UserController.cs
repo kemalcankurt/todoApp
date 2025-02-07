@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
+using user_service.Authorization;
 using user_service.DTOs;
 using user_service.Services;
 
@@ -20,14 +21,15 @@ namespace user_service.Controllers
             _authService = authService;
         }
 
+        [Authorize(Policy = Policies.AdminOnly)]
         [HttpGet]
-        [Authorize(Policy = "RequireAdminRole")]
         public async Task<ActionResult<IEnumerable<UserDto>>> GetAllUsers()
         {
             var users = await _userService.GetAllUsersAsync();
             return Ok(users);
         }
 
+        [Authorize(Policy = Policies.CanViewUser)]
         [HttpGet("{id}")]
         public async Task<ActionResult<UserDto>> GetUserById(long id)
         {
@@ -37,6 +39,7 @@ namespace user_service.Controllers
             return Ok(user);
         }
 
+        [Authorize(Policy = Policies.AdminOnly)]
         [HttpGet("username/{username}")]
         public async Task<ActionResult<UserDto>> GetUserByUsername(string username)
         {
@@ -46,6 +49,7 @@ namespace user_service.Controllers
             return Ok(user);
         }
 
+        [Authorize(Policy = Policies.AdminOnly)]
         [HttpGet("email/{email}")]
         public async Task<ActionResult<UserDto>> GetUserByEmail(string email)
         {
@@ -55,13 +59,15 @@ namespace user_service.Controllers
             return Ok(user);
         }
 
-        [HttpPost]
+        [AllowAnonymous]
+        [HttpPost("register")]
         public async Task<ActionResult<UserDto>> CreateUser(CreateUserDto createUserDto)
         {
             var user = await _userService.CreateUserAsync(createUserDto);
             return CreatedAtAction(nameof(GetUserById), new { id = user.Id }, user);
         }
 
+        [Authorize(Policy = Policies.CanViewUser)]
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateUser(long id, UpdateUserDto updateUserDto)
         {
@@ -69,6 +75,7 @@ namespace user_service.Controllers
             return NoContent();
         }
 
+        [Authorize(Policy = Policies.AdminOnly)]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(long id)
         {
