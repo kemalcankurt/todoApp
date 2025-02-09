@@ -19,6 +19,8 @@ builder.Configuration
 
 builder.Services.AddControllers();
 
+builder.Services.AddHealthChecks();
+
 builder.Services.AddDbContext<TodoDBContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -34,7 +36,7 @@ builder.Services.AddSingleton<JwtService>();
 builder.Services.AddScoped<ITodoRepository, TodoRepository>();
 builder.Services.AddScoped<ITodoService, TodoService>();
 
-// AutoMapper ekleme
+// AutoMapper
 builder.Services.AddAutoMapper(typeof(Program));
 
 // JWT Authentication
@@ -60,6 +62,8 @@ builder.Services.AddAuthorization(options =>
 });
 
 var app = builder.Build();
+
+app.MapHealthChecks("/healthz");
 
 // Auto-migrate database on startup
 using (var scope = app.Services.CreateScope())

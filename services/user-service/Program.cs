@@ -28,6 +28,8 @@ builder.Configuration
 
 builder.Services.AddControllers();
 
+builder.Services.AddHealthChecks();
+
 Console.WriteLine($"environment is: {environment}");
 
 if (environment != "Testing")
@@ -81,6 +83,8 @@ builder.Services.AddAuthorizationBuilder()
 
 var app = builder.Build();
 
+app.MapHealthChecks("/healthz");
+
 if (environment != "Testing")
 {
     // Auto-migrate database on startup
@@ -104,7 +108,9 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapGet("/health", () => Results.Ok("Healthy!"));
 app.MapControllers();
+
 app.Run();
 
 public partial class Program { }

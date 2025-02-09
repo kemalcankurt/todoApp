@@ -136,4 +136,13 @@
             }
         }
     ]
+    ,
+    "GlobalConfiguration": {
+        "BaseUrl": "http://localhost:8000",
+        "RequestIdKey": "OcRequestId",
+        "AdministrationPath": "/admin",
+        "IgnoredRoutes": [
+            "/healthz"
+        ]
+    }
 }

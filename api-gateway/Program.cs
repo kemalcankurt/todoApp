@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-
 using System.Text;
-
 using Ocelot.DependencyInjection;
 using Ocelot.Middleware;
 
@@ -10,7 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration.AddJsonFile("ocelot.json", optional: false, reloadOnChange: true);
 
-// Add Authentication
+// JWT Authentication Setup
 var key = Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"] ?? throw new InvalidOperationException("JWT Secret is missing!"));
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -31,10 +29,21 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-builder.Services.AddOcelot();
 builder.Services.AddAuthorization();
+builder.Services.AddOcelot();
+builder.Services.AddHealthChecks();
 
 var app = builder.Build();
+
+// Separate branch for `/healthz` that bypasses Ocelot
+app.MapWhen(context => context.Request.Path.StartsWithSegments("/healthz"), appBuilder =>
+{
+    appBuilder.Run(async context =>
+    {
+        context.Response.StatusCode = 200;
+        await context.Response.WriteAsync("Healthy!");
+    });
+});
 
 app.UseAuthentication();
 app.UseAuthorization();
