@@ -52,6 +52,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set up Docker Buildx (Installs Docker Compose)
+        uses: docker/setup-buildx-action@v3
+
       - name: Start Docker Compose Services
         run: docker-compose up -d
 
