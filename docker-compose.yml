@@ -5,7 +5,7 @@ services:
     image: mcr.microsoft.com/mssql/server:2019-latest
     container_name: sqlserver_container
     ports:
-    - "1433:1433"
+      - "1433:1433"
     environment:
       SA_PASSWORD: "Password1."
       ACCEPT_EULA: "Y"
@@ -86,11 +86,12 @@ services:
     networks:
       - backend
     volumes:
-      - ./tests/playwright/test-results:/app/test-results  # Persist reports
+      - ./tests/playwright/test-results:/app/test-results
     entrypoint: ["npx", "playwright", "test"]
 
 networks:
   backend:
     driver: bridge
+
 volumes:
   sql_data: 
