@@ -1,6 +1,6 @@
 using System.Security.Claims;
 
-namespace api_gateway.services
+namespace api_gateway.Services
 {
     public interface IJwtService
     {

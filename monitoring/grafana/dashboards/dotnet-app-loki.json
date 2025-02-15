@@ -1,0 +1,461 @@
+{
+    "annotations": {
+        "list": [
+            {
+                "builtIn": 1,
+                "datasource": {
+                    "type": "grafana",
+                    "uid": "-- Grafana --"
+                },
+                "enable": true,
+                "hide": true,
+                "iconColor": "rgba(0, 211, 255, 1)",
+                "name": "Annotations & Alerts",
+                "type": "dashboard"
+            }
+        ]
+    },
+    "description": "A dashboard to visualize logs from microservices using Loki.",
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": 7,
+    "links": [],
+    "panels": [
+        {
+            "datasource": {
+                "type": "loki",
+                "uid": "eecyomsa8oem8f"
+            },
+            "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 24,
+                "x": 0,
+                "y": 0
+            },
+            "id": 1,
+            "options": {
+                "dedupStrategy": "none",
+                "enableInfiniteScrolling": true,
+                "enableLogDetails": true,
+                "prettifyLogMessage": false,
+                "showCommonLabels": false,
+                "showLabels": true,
+                "showTime": false,
+                "sortOrder": "Descending",
+                "wrapLogMessage": true
+            },
+            "pluginVersion": "11.5.1",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "loki",
+                        "uid": "eecyomsa8oem8f"
+                    },
+                    "direction": "backward",
+                    "editorMode": "code",
+                    "expr": "{container=~\"/user-service|/todo-service|/api-gateway\"}",
+                    "queryType": "range",
+                    "refId": "A"
+                }
+            ],
+            "title": "Live Logs - All Services",
+            "type": "logs"
+        },
+        {
+            "datasource": {
+                "type": "loki",
+                "uid": "eecyomsa8oem8f"
+            },
+            "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 24,
+                "x": 0,
+                "y": 8
+            },
+            "id": 2,
+            "options": {
+                "dedupStrategy": "none",
+                "enableInfiniteScrolling": false,
+                "enableLogDetails": true,
+                "prettifyLogMessage": false,
+                "showCommonLabels": false,
+                "showLabels": false,
+                "showTime": false,
+                "sortOrder": "Descending",
+                "wrapLogMessage": false
+            },
+            "pluginVersion": "11.5.1",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "loki",
+                        "uid": "eecyomsa8oem8f"
+                    },
+                    "direction": "backward",
+                    "editorMode": "code",
+                    "expr": "{container=\"/user-service\"} |= `error` | detected_level = `error`",
+                    "queryType": "range",
+                    "refId": "A"
+                }
+            ],
+            "title": "Error Logs - User Service",
+            "type": "logs"
+        },
+        {
+            "datasource": {
+                "type": "loki",
+                "uid": "eecyomsa8oem8f"
+            },
+            "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 24,
+                "x": 0,
+                "y": 12
+            },
+            "id": 3,
+            "options": {
+                "dedupStrategy": "none",
+                "enableInfiniteScrolling": false,
+                "enableLogDetails": true,
+                "prettifyLogMessage": false,
+                "showCommonLabels": false,
+                "showLabels": false,
+                "showTime": false,
+                "sortOrder": "Descending",
+                "wrapLogMessage": false
+            },
+            "pluginVersion": "11.5.1",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "loki",
+                        "uid": "eecyomsa8oem8f"
+                    },
+                    "direction": "backward",
+                    "editorMode": "code",
+                    "expr": "{container=\"/api-gateway\"} |= `error` | detected_level = `error`",
+                    "queryType": "range",
+                    "refId": "A"
+                }
+            ],
+            "title": "Error Logs - API Gateway",
+            "type": "logs"
+        },
+        {
+            "datasource": {
+                "type": "loki",
+                "uid": "eecyomsa8oem8f"
+            },
+            "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 4,
+                "w": 24,
+                "x": 0,
+                "y": 16
+            },
+            "id": 7,
+            "options": {
+                "dedupStrategy": "none",
+                "enableInfiniteScrolling": false,
+                "enableLogDetails": true,
+                "prettifyLogMessage": false,
+                "showCommonLabels": false,
+                "showLabels": false,
+                "showTime": false,
+                "sortOrder": "Descending",
+                "wrapLogMessage": false
+            },
+            "pluginVersion": "11.5.1",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "loki",
+                        "uid": "eecyomsa8oem8f"
+                    },
+                    "direction": "backward",
+                    "editorMode": "code",
+                    "expr": "{container=\"/todo-service\"} |= `error` | detected_level = `error`",
+                    "queryType": "range",
+                    "refId": "A"
+                }
+            ],
+            "title": "Error Logs - Todo Service",
+            "type": "logs"
+        },
+        {
+            "datasource": {
+                "type": "loki",
+                "uid": "eecyomsa8oem8f"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 6,
+                "w": 12,
+                "x": 0,
+                "y": 20
+            },
+            "id": 4,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+            },
+            "pluginVersion": "11.5.1",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "loki",
+                        "uid": "eecyomsa8oem8f"
+                    },
+                    "expr": "count_over_time({container=~\"/user-service|/todo-service|/api-gateway\"}[5m])",
+                    "refId": "A"
+                }
+            ],
+            "title": "Total Log Count (Last 5 Minutes)",
+            "type": "stat"
+        },
+        {
+            "datasource": {
+                "type": "loki",
+                "uid": "eecyomsa8oem8f"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisBorderShow": false,
+                        "axisCenteredZero": false,
+                        "axisColorMode": "text",
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "barWidthFactor": 0.6,
+                        "drawStyle": "line",
+                        "fillOpacity": 0,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "insertNulls": false,
+                        "lineInterpolation": "linear",
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "auto",
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 6,
+                "w": 12,
+                "x": 12,
+                "y": 20
+            },
+            "id": 5,
+            "options": {
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "bottom",
+                    "showLegend": true
+                },
+                "tooltip": {
+                    "hideZeros": false,
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "pluginVersion": "11.5.1",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "loki",
+                        "uid": "eecyomsa8oem8f"
+                    },
+                    "expr": "rate({container=~\"/user-service|/todo-service|/api-gateway\"}[1m])",
+                    "refId": "A"
+                }
+            ],
+            "title": "Log Rate Over Time",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "loki",
+                "uid": "eecyomsa8oem8f"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "custom": {
+                        "align": "auto",
+                        "cellOptions": {
+                            "type": "auto"
+                        },
+                        "inspect": false
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 6,
+                "w": 24,
+                "x": 0,
+                "y": 26
+            },
+            "id": 6,
+            "options": {
+                "cellHeight": "sm",
+                "footer": {
+                    "countRows": false,
+                    "fields": "",
+                    "reducer": [
+                        "sum"
+                    ],
+                    "show": false
+                },
+                "showHeader": true
+            },
+            "pluginVersion": "11.5.1",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "loki",
+                        "uid": "eecyomsa8oem8f"
+                    },
+                    "direction": "backward",
+                    "editorMode": "code",
+                    "expr": "topk(10, count_over_time({container=~\"/user-service|/todo-service|/api-gateway\"} |= `error` | detected_level = `error` [5m]))",
+                    "queryType": "range",
+                    "refId": "A"
+                }
+            ],
+            "title": "Top 10 Most Frequent Error Messages",
+            "type": "table"
+        }
+    ],
+    "preload": false,
+    "schemaVersion": 40,
+    "tags": [
+        "Loki",
+        "Logs",
+        "Monitoring"
+    ],
+    "templating": {
+        "list": [
+            {
+                "current": {
+                    "text": "",
+                    "value": ""
+                },
+                "datasource": {
+                    "type": "loki",
+                    "uid": "eecyomsa8oem8f"
+                },
+                "definition": "label_values({container=~\"/user-service|/todo-service|/api-gateway\"}, container)",
+                "label": "Service",
+                "name": "container",
+                "options": [],
+                "type": "query"
+            }
+        ]
+    },
+    "time": {
+        "from": "now-15m",
+        "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "browser",
+    "title": "Microservices Logs Dashboard (Loki)",
+    "uid": "fecyqh699qpdsc",
+    "version": 7,
+    "weekStart": ""
+}

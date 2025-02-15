@@ -5,78 +5,85 @@ services:
     image: mcr.microsoft.com/mssql/server:2019-latest
     container_name: sqlserver_container
     ports:
-      - "1433:1433"
+      - '1433:1433'
     environment:
-      SA_PASSWORD: "Password1."
-      ACCEPT_EULA: "Y"
+      SA_PASSWORD: 'Password1.'
+      ACCEPT_EULA: 'Y'
     restart: always
     volumes:
       - sql_data:/var/opt/mssql
     healthcheck:
-      test: ["CMD", "bash", "-c", "echo > /dev/tcp/localhost/1433"]
+      test: ['CMD', 'bash', '-c', 'echo > /dev/tcp/localhost/1433']
       interval: 10s
       retries: 10
       start_period: 20s
 
   api-gateway:
     networks:
-      - backend  
+      - backend
     container_name: api-gateway
     build: ./api-gateway
     ports:
-      - "8000:8000"
+      - '8000:8000'
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Docker'
+      OTEL_EXPORTER_OTLP_ENDPOINT: 'http://otel-collector:4320'
     depends_on:
       user-service:
         condition: service_healthy
       todo-service:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "--fail", "http://api-gateway:8000/healthz"]
+      test: ['CMD', 'curl', '--fail', 'http://api-gateway:8000/healthz']
       interval: 5s
       retries: 10
       start_period: 20s
     restart: unless-stopped
 
-  todo-service:
-    networks:
-      - backend
-    container_name: todo-service
-    build: 
-      context: ./services/todo-service
-      dockerfile: Dockerfile
-    ports:
-      - "5000:5000"
-    environment:
-      ASPNETCORE_ENVIRONMENT: "Docker"
-    depends_on:
-      sqlserver:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "--fail", "http://todo-service:5000/healthz"]
-      interval: 10s
-      retries: 5
-      start_period: 10s
-
   user-service:
     networks:
       - backend
     container_name: user-service
-    build: 
+    build:
       context: ./services/user-service
       dockerfile: Dockerfile
     ports:
-      - "5001:5001"
+      - '5001:5001'
     environment:
-      ASPNETCORE_ENVIRONMENT: "Docker"
+      ASPNETCORE_ENVIRONMENT: 'Docker'
+      OTEL_EXPORTER_OTLP_ENDPOINT: 'http://otel-collector:4320'
     depends_on:
       sqlserver:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "--fail", "http://user-service:5001/healthz"]
+      test: ['CMD', 'curl', '--fail', 'http://user-service:5001/healthz']
       interval: 10s
       retries: 5
       start_period: 10s
-    
+    restart: unless-stopped
+
+  # 4️⃣ Todo Service
+  todo-service:
+    networks:
+      - backend
+    container_name: todo-service
+    build:
+      context: ./services/todo-service
+      dockerfile: Dockerfile
+    ports:
+      - '5000:5000'
+    environment:
+      ASPNETCORE_ENVIRONMENT: 'Docker'
+      OTEL_EXPORTER_OTLP_ENDPOINT: 'http://otel-collector:4320'
+    depends_on:
+      - sqlserver
+    healthcheck:
+      test: ['CMD', 'curl', '--fail', 'http://todo-service:5000/healthz']
+      interval: 10s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
   playwright-tests:
     container_name: playwright-tests
     build: ./tests/playwright
@@ -87,11 +94,98 @@ services:
       - backend
     volumes:
       - ./tests/playwright/test-results:/app/test-results
-    entrypoint: ["npx", "playwright", "test"]
+    entrypoint: ['npx', 'playwright', 'test']
+    restart: unless-stopped
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: otel-collector
+    restart: always
+    command: ['--config=/etc/otelcol/config.yaml']
+    volumes:
+      - ./monitoring/otel-collector/config.yml:/etc/otelcol/config.yaml
+    ports:
+      - '4317:4317'
+      - '4318:4318'
+      - '9464:9464'
+    networks:
+      - backend
+
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    user: root
+    networks:
+      - backend
+    ports:
+      - '3100:3100'
+    volumes:
+      - loki_data:/var/loki
+      - ./monitoring/loki/config.yml:/etc/loki/local-config.yml
+    command: -config.file=/etc/loki/local-config.yml
+    restart: unless-stopped
+
+  promtail:
+    image: grafana/promtail:latest
+    container_name: promtail
+    networks:
+      - backend
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./monitoring/promtail/config.yml:/etc/promtail/config.yml
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
+    restart: unless-stopped
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: jaeger
+    restart: always
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    ports:
+      - '16686:16686'
+      - '5317:4317'
+      - '5318:4318'
+    networks:
+      - backend
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    networks:
+      - backend
+    ports:
+      - '9090:9090'
+    volumes:
+      - ./monitoring/prometheus/config.yml:/etc/prometheus/prometheus.yml
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    networks:
+      - backend
+    ports:
+      - '3000:3000'
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards/:/etc/grafana/dashboards/
+      - ./monitoring/grafana/provisioning/dashboards/:/etc/grafana/provisioning/dashboards/
+      - ./monitoring/grafana/provisioning/datasources/:/etc/grafana/provisioning/datasources/
+    restart: unless-stopped
 
 networks:
   backend:
     driver: bridge
 
 volumes:
-  sql_data: 
+  sql_data:
+  loki_data:
+    driver: local
+  grafana_data:
+    driver: local

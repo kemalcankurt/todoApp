@@ -1,0 +1,136 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: '0.0.0.0:4317'
+      http:
+        endpoint: '0.0.0.0:4318'
+
+  loki:
+    protocols:
+      http:
+        endpoint: '0.0.0.0:3500'
+
+processors:
+  batch:
+    timeout: 5s
+    send_batch_size: 100
+
+  memory_limiter:
+    limit_percentage: 75
+    spike_limit_percentage: 20
+    check_interval: 15s
+
+  resource:
+    attributes:
+      - action: insert
+        key: job
+        from_attribute: service.name
+
+  attributes:
+    actions:
+      - key: service.name
+        action: upsert
+        from_attribute: service.name
+      - key: http.target
+        action: upsert
+        from_attribute: http.target
+      - key: http.method
+        action: upsert
+        from_attribute: http.method
+      - key: http.status_code
+        action: upsert
+        from_attribute: http.status_code
+
+  filter/gateway:
+    metrics:
+      include:
+        match_type: strict
+        resource_attributes:
+          - key: service.name
+            value: api-gateway
+
+  filter/user:
+    metrics:
+      include:
+        match_type: strict
+        resource_attributes:
+          - key: service.name
+            value: user-service
+
+  filter/todo:
+    metrics:
+      include:
+        match_type: strict
+        resource_attributes:
+          - key: service.name
+            value: todo-service
+
+exporters:
+  otlp:
+    endpoint: 'http://jaeger:4317'
+    tls:
+      insecure: true
+
+  prometheus/gateway:
+    endpoint: '0.0.0.0:9464'
+    namespace: 'gateway'
+    resource_to_telemetry_conversion:
+      enabled: true
+    send_timestamps: true
+    enable_open_metrics: true
+
+  prometheus/user:
+    endpoint: '0.0.0.0:9465'
+    namespace: 'user'
+    resource_to_telemetry_conversion:
+      enabled: true
+    send_timestamps: true
+    enable_open_metrics: true
+
+  prometheus/todo:
+    endpoint: '0.0.0.0:9466'
+    namespace: 'todo'
+    resource_to_telemetry_conversion:
+      enabled: true
+    send_timestamps: true
+    enable_open_metrics: true
+
+  loki:
+    endpoint: 'http://loki:3100/loki/api/v1/push'
+
+  debug:
+    verbosity: detailed
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch, memory_limiter, resource, attributes]
+      exporters: [otlp]
+
+    metrics/gateway:
+      receivers: [otlp]
+      processors: [batch, memory_limiter, filter/gateway]
+      exporters: [prometheus/gateway]
+
+    metrics/user:
+      receivers: [otlp]
+      processors: [batch, memory_limiter, filter/user]
+      exporters: [prometheus/user]
+
+    metrics/todo:
+      receivers: [otlp]
+      processors: [batch, memory_limiter, filter/todo]
+      exporters: [prometheus/todo]
+
+    logs:
+      receivers: [otlp]
+      processors: [batch, resource]
+      exporters: [loki]
+
+  telemetry:
+    metrics:
+      address: '0.0.0.0:8888'
+    logs:
+      level: 'info'

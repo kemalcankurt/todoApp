@@ -2,7 +2,7 @@ using System.Security.Claims;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-using api_gateway.services;
+using api_gateway.Services;
 
 namespace api_gateway.Middleware
 {

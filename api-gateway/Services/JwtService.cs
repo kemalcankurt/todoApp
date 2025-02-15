@@ -6,8 +6,9 @@ using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Options;
 
-using api_gateway.services;
 using api_gateway.Config;
+
+namespace api_gateway.Services;
 
 public class JwtService : IJwtService
 {
@@ -86,8 +87,7 @@ public class JwtService : IJwtService
                 return null;
             }
 
-            _logger.LogCritical($"_jwtOptions.Secret", _jwtOptions.Secret);
-
+            _logger.LogCritical("JWT Secret: {Secret}", _jwtOptions.Secret);
 
             var key = Encoding.UTF8.GetBytes(_jwtOptions.Secret);
             var parameters = new TokenValidationParameters

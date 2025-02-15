@@ -96,6 +96,7 @@
             "UpstreamPathTemplate": "/api/todo/{everything}",
             "UpstreamHttpMethod": [
                 "GET",
+                "POST",
                 "PUT",
                 "DELETE"
             ],

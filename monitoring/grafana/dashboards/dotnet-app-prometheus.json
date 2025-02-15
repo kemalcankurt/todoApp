@@ -1,0 +1,318 @@
+{
+    "annotations": {
+        "list": [
+            {
+                "builtIn": 1,
+                "datasource": {
+                    "type": "grafana",
+                    "uid": "-- Grafana --"
+                },
+                "enable": true,
+                "hide": true,
+                "iconColor": "rgba(0, 211, 255, 1)",
+                "name": "Annotations & Alerts",
+                "type": "dashboard"
+            }
+        ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 1,
+    "id": 8,
+    "links": [],
+    "panels": [
+        {
+            "title": "Service Health Overview",
+            "type": "row",
+            "collapsed": false,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 0
+            }
+        },
+        {
+            "title": "🚦 Service Status",
+            "type": "stat",
+            "gridPos": {
+                "h": 4,
+                "w": 8,
+                "x": 0,
+                "y": 1
+            },
+            "targets": [
+                {
+                    "expr": "up",
+                    "legendFormat": "{{job}}"
+                }
+            ]
+        },
+        {
+            "title": "💻 Memory Usage",
+            "type": "bargauge",
+            "gridPos": {
+                "h": 4,
+                "w": 8,
+                "x": 8,
+                "y": 1
+            },
+            "targets": [
+                {
+                    "expr": "sum by(job) (process_memory_usage_bytes) / 1024 / 1024",
+                    "legendFormat": "{{job}} MB"
+                }
+            ]
+        },
+        {
+            "title": "📊 GC Collections",
+            "type": "timeseries",
+            "gridPos": {
+                "h": 4,
+                "w": 8,
+                "x": 16,
+                "y": 1
+            },
+            "targets": [
+                {
+                    "expr": "sum by(job, generation) (rate(dotnet_gc_collections_total[5m]))",
+                    "legendFormat": "{{job}} - Gen {{generation}}"
+                }
+            ]
+        },
+        {
+            "title": "Database Operations",
+            "type": "row",
+            "collapsed": false,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 5
+            }
+        },
+        {
+            "title": "🔄 Database Operations Rate",
+            "type": "timeseries",
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 0,
+                "y": 6
+            },
+            "targets": [
+                {
+                    "expr": "rate(db_client_operation_duration_seconds_count[5m])",
+                    "legendFormat": "{{job}} - Operations/sec"
+                }
+            ]
+        },
+        {
+            "title": "⏱️ Database Latency (p95)",
+            "type": "timeseries",
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 12,
+                "y": 6
+            },
+            "targets": [
+                {
+                    "expr": "histogram_quantile(0.95, sum by(le, job) (rate(db_client_operation_duration_seconds_bucket[5m])))",
+                    "legendFormat": "{{job}} - p95 Latency"
+                }
+            ]
+        },
+        {
+            "title": "HTTP Traffic",
+            "type": "row",
+            "collapsed": false,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 14
+            }
+        },
+        {
+            "title": "⚡ Request Rate",
+            "type": "timeseries",
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 0,
+                "y": 15
+            },
+            "targets": [
+                {
+                    "expr": "sum by(job) (rate(http_server_request_duration_seconds_count[5m]))",
+                    "legendFormat": "{{job}}"
+                }
+            ]
+        },
+        {
+            "title": "🌡️ Response Times (p95)",
+            "type": "timeseries",
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 12,
+                "y": 15
+            },
+            "targets": [
+                {
+                    "expr": "histogram_quantile(0.95, sum by(le, job) (rate(http_server_request_duration_seconds_bucket[5m])))",
+                    "legendFormat": "{{job}}"
+                }
+            ]
+        },
+        {
+            "title": "API Gateway Metrics",
+            "type": "row",
+            "collapsed": false,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 23
+            }
+        },
+        {
+            "title": "🛣️ Route Traffic",
+            "type": "timeseries",
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 0,
+                "y": 24
+            },
+            "targets": [
+                {
+                    "expr": "sum by(route) (rate(ocelot_route_requests_total[5m]))",
+                    "legendFormat": "{{route}}"
+                }
+            ]
+        },
+        {
+            "title": "🔒 Rate Limiting",
+            "type": "timeseries",
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 12,
+                "y": 24
+            },
+            "targets": [
+                {
+                    "expr": "sum by(route, job) (rate(http_server_request_duration_seconds_count{http_response_status_code=\"429\"}[5m]))",
+                    "legendFormat": "{{job}} - {{route}}"
+                }
+            ],
+            "options": {
+                "tooltip": {
+                    "mode": "multi",
+                    "sort": "desc"
+                }
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "custom": {
+                        "fillOpacity": 10,
+                        "lineWidth": 2,
+                        "spanNulls": false
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 1
+                            },
+                            {
+                                "color": "red",
+                                "value": 5
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "title": "Error Tracking",
+            "type": "row",
+            "collapsed": false,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 32
+            }
+        },
+        {
+            "title": "🎯 Status Codes",
+            "type": "piechart",
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 0,
+                "y": 33
+            },
+            "targets": [
+                {
+                    "expr": "sum by(http_response_status_code, job) (rate(http_server_request_duration_seconds_count[5m]))",
+                    "legendFormat": "{{job}} - {{http_response_status_code}}"
+                }
+            ]
+        },
+        {
+            "title": "🛑 Error Rates",
+            "type": "timeseries",
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 12,
+                "y": 33
+            },
+            "targets": [
+                {
+                    "expr": "sum by(job, http_response_status_code) (rate(http_server_request_duration_seconds_count{http_response_status_code=~\"4..|5..\"}[5m]))",
+                    "legendFormat": "{{job}} - {{http_response_status_code}}"
+                }
+            ]
+        }
+    ],
+    "preload": false,
+    "refresh": "5s",
+    "schemaVersion": 40,
+    "style": "dark",
+    "tags": [
+        "prometheus",
+        "monitoring",
+        "dotnet",
+        "microservices"
+    ],
+    "templating": {
+        "list": [
+            {
+                "name": "job",
+                "type": "query",
+                "query": "label_values(job)",
+                "refresh": 2
+            }
+        ]
+    },
+    "time": {
+        "from": "now-15m",
+        "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "browser",
+    "title": "🚀 .NET Application Dashboard",
+    "uid": "eecyiry30d0jkc",
+    "version": 19,
+    "weekStart": ""
+}

@@ -40,7 +40,7 @@ namespace todo_service.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<TodoReadDto>> CreateTodo(TodoCreateDto todo)
+        public async Task<ActionResult<TodoReadDto>> CreateTodo([FromBody] TodoCreateDto todoDto)
         {
             string? token = HttpContext.Request.Headers.Authorization.FirstOrDefault()?.Split(" ").Last();
 
@@ -52,7 +52,7 @@ namespace todo_service.Controllers
             if (!userId.HasValue)
                 return BadRequest(new { message = "Invalid token or user not found." });
 
-            var addedTodo = await _todoService.AddTodoAsync(userId, todo);
+            var addedTodo = await _todoService.AddTodoAsync(userId, todoDto);
             return CreatedAtAction(nameof(GetTodoById), new { id = addedTodo.Id }, addedTodo);
         }
 
