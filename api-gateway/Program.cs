@@ -1,4 +1,6 @@
 using System.Diagnostics.Metrics;
+using System.Text.Json.Serialization;
+using System.Text.Json;
 using System.Text;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -12,6 +14,7 @@ using api_gateway.Config;
 
 using Ocelot.DependencyInjection;
 using Ocelot.Middleware;
+using MMLib.SwaggerForOcelot.Configuration;
 
 using Serilog;
 
@@ -129,16 +132,19 @@ void ConfigureServices(WebApplicationBuilder builder)
 
     builder.Services.AddOcelot();
 
+    builder.Services.AddSwaggerForOcelot(builder.Configuration);
+
     builder.Services.AddHealthChecks();
 
     builder.Services.AddCors(options =>
     {
-        options.AddPolicy("DefaultPolicy", policy =>
+        options.AddPolicy("AllowFrontend", builder =>
         {
-            policy.WithOrigins(builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? Array.Empty<string>())
-                  .AllowAnyMethod()
-                  .AllowAnyHeader()
-                  .WithExposedHeaders("X-Correlation-ID");
+            builder
+                .SetIsOriginAllowed(_ => true) // For development - make more restrictive in production
+                .AllowAnyMethod()
+                .AllowAnyHeader()
+                .AllowCredentials();
         });
     });
 
@@ -201,6 +207,9 @@ void ConfigureAuth(WebApplicationBuilder builder)
 
 void ConfigureMiddleware(WebApplication app, string environment)
 {
+    // Move CORS before other middleware
+    app.UseCors("AllowFrontend");
+
     // Exception Handling
     app.UseExceptionHandler(errorApp =>
     {
@@ -235,8 +244,26 @@ void ConfigureMiddleware(WebApplication app, string environment)
 
     if (environment != "Production")
     {
-        app.UseSwagger();
-        app.UseSwaggerUI();
+        // MMLib.SwaggerForOcelot
+        var swaggerConfig = builder.Configuration.GetSection("SwaggerEndPoints").Get<List<SwaggerEndPointOptions>>();
+
+        var options = new JsonSerializerOptions
+        {
+            ReferenceHandler = ReferenceHandler.Preserve,
+            WriteIndented = true
+        };
+
+        Console.WriteLine($"swaggerConfig: {JsonSerializer.Serialize(swaggerConfig, options)}");
+
+        if (swaggerConfig == null)
+        {
+            throw new InvalidOperationException(" SwaggerEndPoints section is missing or empty. Check ocelot.json.");
+        }
+        
+        app.UseSwaggerForOcelotUI(opt =>
+        {
+            opt.PathToSwaggerGenerator = "/swagger/docs";
+        });
     }
 
     app.UseMiddleware<RoleToClientIdMiddleware>();
@@ -261,12 +288,9 @@ void ConfigureMiddleware(WebApplication app, string environment)
         });
     });
 
-    app.UseCors("DefaultPolicy");
-
     app.UseAuthentication();
     app.UseAuthorization();
 
-    // First let Ocelot handle everything
     app.UseOcelot().Wait();
 
     // Get the counters

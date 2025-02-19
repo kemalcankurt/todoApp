@@ -71,6 +71,7 @@
                 "PUT",
                 "DELETE"
             ],
+            "SwaggerKey": "user-service",
             "DownstreamPathTemplate": "/api/user/{everything}",
             "DownstreamScheme": "http",
             "DownstreamHostAndPorts": [
@@ -100,6 +101,7 @@
                 "PUT",
                 "DELETE"
             ],
+            "SwaggerKey": "todo-service",
             "DownstreamPathTemplate": "/api/todo/{everything}",
             "DownstreamScheme": "http",
             "DownstreamHostAndPorts": [
@@ -136,5 +138,27 @@
             "RateLimitCounterPrefix": "ocelot-ratelimit",
             "HttpStatusCode": 429
         }
-    }
+    },
+    "SwaggerEndPoints": [
+        {
+            "Key": "user-service",
+            "Config": [
+                {
+                    "Name": "User Service",
+                    "Version": "v1",
+                    "Url": "http://user-service:5001/swagger/v1/swagger.json"
+                }
+            ]
+        },
+        {
+            "Key": "todo-service",
+            "Config": [
+                {
+                    "Name": "Todo Service",
+                    "Version": "v1",
+                    "Url": "http://todo-service:5000/swagger/v1/swagger.json"
+                }
+            ]
+        }
+    ]
 }

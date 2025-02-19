@@ -7,15 +7,16 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
+using user_service.Authorization.Requirements;
+using user_service.Authorization;
+using user_service.Repositories;
+using user_service.Middlewares;
+using user_service.Services;
 using user_service.Config;
 using user_service.Data;
-using user_service.Repositories;
-using user_service.Services;
-using user_service.Middlewares;
-using user_service.Authorization;
-using user_service.Authorization.Requirements;
 using user_service.Authorization.Handlers;
 using user_service.Mappings;
+using user_service.Swagger;
 
 using Serilog;
 
@@ -74,21 +75,25 @@ void ConfigureConfiguration(WebApplicationBuilder builder)
 
 void ConfigureLogging(WebApplicationBuilder builder)
 {
-    var loggerConfig = new LoggerConfiguration()
-        .MinimumLevel.Information()
+    builder.Host.UseSerilog((ctx, lc) => lc
+        .MinimumLevel.Debug()
         .Enrich.FromLogContext()
         .Enrich.WithEnvironmentName()
         .Enrich.WithMachineName()
-        .WriteTo.Console(outputTemplate:
-            "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}");
+        .WriteTo.Console(
+            Serilog.Events.LogEventLevel.Debug,
+            outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}"
+        ));
 
-    if (environment == "Production")
+    builder.Logging.ClearProviders();
+    builder.Logging.AddSerilog();
+    builder.Logging.AddOpenTelemetry(logging =>
     {
-        loggerConfig.MinimumLevel.Warning();
-    }
-
-    Log.Logger = loggerConfig.CreateLogger();
-    builder.Host.UseSerilog();
+        logging.IncludeFormattedMessage = true;
+        logging.IncludeScopes = true;
+        logging.ParseStateValues = true;
+        logging.AddOtlpExporter(options => options.Endpoint = new Uri("http://otel-collector:4317"));
+    });
 }
 
 void ConfigureTelemetry(WebApplicationBuilder builder)
@@ -115,7 +120,10 @@ void ConfigureTelemetry(WebApplicationBuilder builder)
             tracerProvider
                 .SetResourceBuilder(resourceBuilder)
                 .AddAspNetCoreInstrumentation()
-                .AddEntityFrameworkCoreInstrumentation()
+                .AddEntityFrameworkCoreInstrumentation(options =>
+                {
+                    options.SetDbStatementForText = true;
+                })
                 .AddSqlClientInstrumentation(options =>
                 {
                     options.RecordException = true;
@@ -146,6 +154,8 @@ void ConfigureServices(WebApplicationBuilder builder)
     // API Controllers
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
+
+    ConfigureSwagger(builder);
 
     // Health Checks
     builder.Services.AddHealthChecks()
@@ -218,27 +228,13 @@ void ConfigureSecurity(WebApplicationBuilder builder)
             policy.Requirements.Add(new AdminAuthorizationRequirement()));
 }
 
-async Task ConfigureDatabase(WebApplication app)
-{
-    if (environment != "Testing")
-    {
-        using var scope = app.Services.CreateScope();
-        try
-        {
-            var context = scope.ServiceProvider.GetRequiredService<UserDbContext>();
-            await context.Database.MigrateAsync();
-            Log.Information("Database migration completed successfully");
-        }
-        catch (Exception ex)
-        {
-            Log.Error(ex, "An error occurred while migrating the database");
-            throw;
-        }
-    }
-}
-
 void ConfigureMiddleware(WebApplication app)
 {
+    if (!app.Environment.IsProduction())
+    {
+        app.UseSwagger();
+    }
+
     // Exception Handling
     app.UseMiddleware<ExceptionMiddleware>();
 
@@ -266,6 +262,68 @@ void ConfigureMiddleware(WebApplication app)
     app.UseAuthentication();
     app.UseAuthorization();
     app.MapControllers();
+}
+
+async Task ConfigureDatabase(WebApplication app)
+{
+    if (environment != "Testing")
+    {
+        using var scope = app.Services.CreateScope();
+        try
+        {
+            var context = scope.ServiceProvider.GetRequiredService<UserDbContext>();
+            await context.Database.MigrateAsync();
+            Log.Information("Database migration completed successfully");
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "An error occurred while migrating the database");
+            throw;
+        }
+    }
+}
+
+void ConfigureSwagger(WebApplicationBuilder builder)
+{
+    if (environment != "Production")
+    {
+        var swaggerConfig = builder.Configuration.GetSection("Swagger").Get<ApiSwaggerOptions>();
+
+        if (swaggerConfig == null) return;
+
+        builder.Services.AddSwaggerGen(options =>
+        {
+            // Load API metadata from configuration
+            options.SwaggerDoc(swaggerConfig.Version, new Microsoft.OpenApi.Models.OpenApiInfo
+            {
+                Title = swaggerConfig.Title,
+                Version = swaggerConfig.Version,
+                Description = swaggerConfig.Description,
+                Contact = new Microsoft.OpenApi.Models.OpenApiContact
+                {
+                    Name = swaggerConfig.Contact?.Name,
+                    Email = swaggerConfig.Contact?.Email
+                }
+            });
+
+            // Load JWT Security configuration
+            var securityScheme = new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Name = swaggerConfig.Security?.Bearer?.Name,
+                Description = swaggerConfig.Security?.Bearer?.Description,
+                In = Enum.Parse<Microsoft.OpenApi.Models.ParameterLocation>(swaggerConfig.Security?.Bearer?.In),
+                Type = Enum.Parse<Microsoft.OpenApi.Models.SecuritySchemeType>(swaggerConfig.Security?.Bearer?.Type),
+                Scheme = swaggerConfig.Security?.Bearer?.Scheme,
+                BearerFormat = swaggerConfig.Security?.Bearer?.BearerFormat
+            };
+
+            options.AddSecurityDefinition("Bearer", securityScheme);
+            options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+            {
+        { securityScheme, Array.Empty<string>() }
+            });
+        });
+    }
 }
 
 // Required for integration testing

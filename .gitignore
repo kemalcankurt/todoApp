@@ -407,3 +407,8 @@ global.json
 *.sln.iml
 
 .DS_Store
+
+# Frontend build output
+dist
+dist-ssr
+*.local
